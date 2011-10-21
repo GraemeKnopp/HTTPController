@@ -228,7 +228,10 @@
   if ([self state] != CONTROLLER_STOPPED) {
     if ([self.queue count] > 0) {
       // process queue using FIFO
-      [self processRequest:[self.queue objectAtIndex:0]];
+      HTTPRequestor* newRequest = [self.queue objectAtIndex:0];
+      if (newRequest != nil) {
+        [self processRequest:newRequest];
+      }
     } else {
       if (self.delegate != self) {
         [self.delegate queueFinished];
