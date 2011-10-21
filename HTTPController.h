@@ -47,6 +47,7 @@ typedef enum
   NSMutableArray* queue_;
   int state;
   NSURLConnection* urlConnection;
+  BOOL isRunning;
   
 }
 
@@ -54,6 +55,7 @@ typedef enum
 @property (nonatomic, readonly) NSMutableArray* queue;
 @property (nonatomic, assign) int state;
 @property (nonatomic, retain) NSURLConnection* urlConnection;
+@property (nonatomic, assign) BOOL isRunning;
 
 
 // define interface methods

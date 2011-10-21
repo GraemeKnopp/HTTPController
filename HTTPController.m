@@ -14,11 +14,10 @@
 @synthesize queue = queue_;
 @synthesize state;
 @synthesize urlConnection;
-
+@synthesize isRunning;
 
 
 #pragma mark - Init and Dealloc
-
 
 - (id)init {
   self = [super init];
@@ -27,6 +26,7 @@
   queue_ = [[NSMutableArray alloc] init];
   self.state = CONTROLLER_READY;
   self.urlConnection = nil;
+  self.isRunning = NO;
   
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startQueue) name:NOTIF_NEXTHTTPREQUEST object:nil];
   
@@ -40,11 +40,22 @@
 }
 
 
+
 #pragma mark - Miscellaneous Methods
+
+-(void) handleNextRequest {
+  
+  [self.queue removeObjectAtIndex:0];
+  self.isRunning = NO;
+
+  // post notification to trigger next request
+  [[NSNotificationCenter defaultCenter] postNotificationName:NOTIF_NEXTHTTPREQUEST object:nil];
+  
+}
 
 -(void) processRequest:(HTTPRequestor*)theRequest {
   
-  NSLog(@"HTTP > PROCESSING");
+  NSLog(@"HTTP > PROCESSING > %@", [theRequest url]);
   
   // change controller state
   if (theRequest.requestMethod == HTTP_GET) {
@@ -68,10 +79,10 @@
     if ([self state] != CONTROLLER_STOPPED)
       self.state = CONTROLLER_DOWNLOADING;
   }
+
   
-  if (self.urlConnection != nil) [self.urlConnection release];
-  self.urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
-  if (!self.urlConnection) {
+  NSURLConnection* bob = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+  if (!bob) {
     if (self.delegate != self) {
       // set error in theRequest to indicate what happened
       NSError* newError = [[NSError alloc] initWithDomain:@"Failed to create a connection." code:4004 userInfo:nil];
@@ -82,11 +93,11 @@
       [self.delegate requestFailed:theRequest];
     }
     
-    // post notification to trigger next request
-    [self.queue removeObjectAtIndex:0];
-    [[NSNotificationCenter defaultCenter] postNotificationName:NOTIF_NEXTHTTPREQUEST object:nil];
+    [self handleNextRequest];
   }
+  
 }
+
 
 
 #pragma mark - Connection Methods
@@ -175,9 +186,8 @@
   [self.urlConnection release];
   self.state = CONTROLLER_READY;
   
-  // post notification to trigger next request
-  [self.queue removeObjectAtIndex:0];
-  [[NSNotificationCenter defaultCenter] postNotificationName:NOTIF_NEXTHTTPREQUEST object:nil];
+  [connection release];
+  [self handleNextRequest];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
@@ -198,23 +208,24 @@
   // reset connection & state
   [self.urlConnection release];
   self.state = CONTROLLER_READY;
-  
-  // post notification to trigger next request
-  [self.queue removeObjectAtIndex:0];
-  [[NSNotificationCenter defaultCenter] postNotificationName:NOTIF_NEXTHTTPREQUEST object:nil];
+
+  [connection release];
+  [self handleNextRequest];
 }
+
+
 
 #pragma mark - Interface Methods
 
 -(void) requestWithURL:(NSString*)url {
 
-  NSLog(@"HTTP > REQUEST > %@", url);
-  
   HTTPRequestor* newRequest = [[HTTPRequestor alloc] init];
   [newRequest setUrl:url];
   [self queueRequest:newRequest];
   [newRequest release];
-  [self startQueue];
+  
+  if ([self isRunning] == NO)
+    [self startQueue];
 }
 
 -(void) queueRequest:(HTTPRequestor*)newRequest {
@@ -222,6 +233,9 @@
 }
 
 -(void) startQueue {
+  
+  if (self.isRunning) return;  
+  self.isRunning = YES;
   
   NSLog(@"HTTP > QUEUE > %d", [self requestsInQueue]);  
   
@@ -235,6 +249,7 @@
     } else {
       if (self.delegate != self) {
         [self.delegate queueFinished];
+        self.isRunning = NO;
       }
     }
   }
@@ -243,6 +258,7 @@
 -(void) stopQueue {
   if ([self state] != CONTROLLER_READY) {
     self.state = CONTROLLER_STOPPED;
+    self.isRunning = NO;
   }
 }
 
@@ -250,7 +266,7 @@
   
   // stop processing of queue
   [self stopQueue];
-  
+
   // flag requests as cancelled
   for(HTTPRequestor* req in queue_) {
     [req setCancelled:YES];
@@ -278,6 +294,7 @@
 -(HTTPRequestor*) currentRequest {
   return ([queue_ count] > 0) ? nil : [queue_ objectAtIndex:0];
 }
+
 
 @end
 
