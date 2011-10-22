@@ -59,14 +59,15 @@ typedef enum
 
 
 // define interface methods
--(void) requestWithURL:(NSString*)url;            // simple download request
--(void) queueRequest:(HTTPRequestor*)newRequest;  // complex (upload) request
--(void) startQueue;                               // go !
--(void) stopQueue;                                // stop !
--(void) cancelQueue;                              // empty queue after current request
+-(HTTPRequestor*) requestSynchronousURL:(NSString*)url;     // send it right away !!
+-(void) requestWithURL:(NSString*)url;                      // simple download request
+-(void) queueRequest:(HTTPRequestor*)newRequest;            // complex (upload) request
+-(void) startQueue;                                         // go !
+-(void) stopQueue;                                          // stop !
+-(void) cancelQueue;                                        // empty queue after current request
 
 // informative methods
--(int) requestsInQueue;          // returns [queue count];
+-(int) requestsInQueue;            // returns [queue count];
 -(HTTPRequestor*) currentRequest;  // returns nil or [queue objectAtIndex:0];
 
 @end

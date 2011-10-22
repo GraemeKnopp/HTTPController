@@ -29,6 +29,8 @@
     BOOL isComplete_;
     BOOL isFinished_;
     BOOL wasCancelled_;
+    BOOL isSynchronous_;
+  
     NSError* error_;
     
   @private
@@ -50,6 +52,7 @@
   @property (nonatomic, assign) BOOL complete;
   @property (nonatomic, assign) BOOL finished;
   @property (nonatomic, assign) BOOL cancelled;
+  @property (nonatomic, assign) BOOL sentSynchronously;
   @property (nonatomic, retain) NSError* error;
   @property (nonatomic, assign) unsigned long totalBytesSent;
   @property (nonatomic, assign) unsigned long contentLength;

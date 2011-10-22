@@ -19,6 +19,7 @@
 @synthesize complete = isComplete_;
 @synthesize finished = isFinished_;
 @synthesize cancelled = wasCancelled_;
+@synthesize sentSynchronously = isSynchronous_;
 @synthesize error;
 
 @synthesize totalBytesSent;
@@ -41,6 +42,7 @@
       requestHeaders_ = [[NSMutableDictionary alloc] init];
       responseHeaders_ = [[NSDictionary alloc] init];
       userInfo_ = [[NSDictionary alloc] init];
+      isSynchronous_ = NO;
       
       // defaults
       requestType_ = @"GET";

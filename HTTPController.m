@@ -217,6 +217,37 @@
 
 #pragma mark - Interface Methods
 
+
+-(HTTPRequestor*) requestSynchronousURL:(NSString*)url {
+  
+  NSError* error = nil;
+  NSURLResponse* response = nil;
+
+  // build return object
+  HTTPRequestor* newRequest = [[HTTPRequestor alloc] init];
+  [newRequest setUrl:url];
+  [newRequest setSentSynchronously:YES];
+
+  // setup request objects
+  NSURLRequest* newUrlRequest = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+  [newRequest setRequestHeaders:(NSMutableDictionary*)newUrlRequest.allHTTPHeaderFields];
+
+  // make remote call
+  NSMutableData* resultant = (NSMutableData*)[NSURLConnection sendSynchronousRequest:newUrlRequest returningResponse:&response error:&error];
+  [newUrlRequest release];
+  
+  // set responses
+  NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse *)response;
+  [newRequest setResponseHeaders:httpResponse.allHeaderFields];
+  [newRequest setResponseCode:(int)httpResponse.statusCode];
+  
+  // set return data if any
+  [newRequest addToResponseData:resultant];
+  [newRequest setError:error];
+  
+  return [newRequest autorelease];
+}
+
 -(void) requestWithURL:(NSString*)url {
 
   HTTPRequestor* newRequest = [[HTTPRequestor alloc] init];
@@ -226,7 +257,7 @@
   
   if ([self isRunning] == NO)
     [self startQueue];
-}
+}    
 
 -(void) queueRequest:(HTTPRequestor*)newRequest {
   [self.queue addObject:newRequest];
